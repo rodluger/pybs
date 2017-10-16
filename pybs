@@ -10,6 +10,7 @@ Submit a python command to a cluster with PBS.
 import os
 import subprocess
 import argparse
+import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 def submit(command, nodes = 1, ppn = 16, walltime = 10, email = None, queue = None):
@@ -17,11 +18,21 @@ def submit(command, nodes = 1, ppn = 16, walltime = 10, email = None, queue = No
     
     '''
     
+    # Create a temporary python file?
+    if command.endswith('.py'):
+        pyfile = command
+        remove = 0
+    else:
+        pyfile = os.path.join(HERE, 'tmp%05d.py' % np.random.randint(99999))
+        with open(pyfile, 'w') as f:
+            print(command, file = f)
+        remove = 1
+    
     # Submit the cluster job      
     pbsfile = os.path.join(HERE, 'pybs.pbs')
     str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)
     str_w = 'walltime=%d:00:00' % walltime
-    str_v = "COMMANDS=\"%s\"" % command
+    str_v = "PYFILE=%s,PYRM=%d" % (pyfile, remove)
     str_name = 'pybs'
     str_out = os.path.join(HERE, 'pybs.log')
     qsub_args = ['qsub', pbsfile, 
@@ -42,7 +53,7 @@ def submit(command, nodes = 1, ppn = 16, walltime = 10, email = None, queue = No
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(prog = 'pybs', add_help = True)
-    parser.add_argument("command", type = str, help = 'The python command(s) to run')
+    parser.add_argument("command", type = str, help = 'The python file or command(s) to run')
     parser.add_argument("-e", "--email", type = str, default = None, help = 'User email')
     parser.add_argument("-n", "--nodes", type = int, default = 1, help = 'Number of nodes')
     parser.add_argument("-p", "--ppn", type = int, default = 16, help = 'Number of processors per node')
