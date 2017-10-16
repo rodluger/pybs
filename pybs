@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+pybs
+----
+Submit a python command to a cluster with PBS.
+
+'''
+
+import os
+import subprocess
+import argparse
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+def submit(command, nodes = 1, ppn = 16, walltime = 10, email = None, queue = None):
+    '''
+    
+    '''
+    
+    # Submit the cluster job      
+    pbsfile = os.path.join(HERE, 'pybs.pbs')
+    str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)
+    str_w = 'walltime=%d:00:00' % walltime
+    str_v = "COMMANDS='%s'" % command
+    str_name = 'pybs'
+    str_out = os.path.join(HERE, 'pybs.log')
+    qsub_args = ['qsub', pbsfile, 
+                 '-v', str_v, 
+                 '-o', str_out,
+                 '-j', 'oe', 
+                 '-N', str_name,
+                 '-l', str_n,
+                 '-l', str_w]
+    if email is not None: 
+        qsub_args.append(['-M', email, '-m', 'ae'])
+    if queue is not None:
+        qsub_args += ['-q', queue]          
+    print(" ".join(qsub_args))
+    subprocess.call(qsub_args)
+
+if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser(prog = 'pybs', add_help = True)
+    parser.add_argument("command", type = str, help = 'The python command(s) to run')
+    parser.add_argument("-e", "--email", type = str, default = None, help = 'User email')
+    parser.add_argument("-n", "--nodes", type = int, default = 1, help = 'Number of nodes')
+    parser.add_argument("-p", "--ppn", type = int, default = 16, help = 'Number of processors per node')
+    parser.add_argument("-w", "--walltime", type = int, default = 10, help = 'Number of wall clock hours to run')
+    parser.add_argument("-q", "--queue", type = str, default = None, help = 'Queue to submit to')
+    args = parser.parse_args()
+    
+    submit(args.command, nodes = args.nodes, ppn = args.ppn, 
+           walltime = args.walltime, email = args.email, queue = args.queue)
