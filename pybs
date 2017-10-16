@@ -21,7 +21,7 @@ def submit(command, nodes = 1, ppn = 16, walltime = 10, email = None, queue = No
     pbsfile = os.path.join(HERE, 'pybs.pbs')
     str_n = 'nodes=%d:ppn=%d,feature=%dcore' % (nodes, ppn, ppn)
     str_w = 'walltime=%d:00:00' % walltime
-    str_v = "COMMANDS='%s'" % command
+    str_v = "COMMANDS=\"%s\"" % command
     str_name = 'pybs'
     str_out = os.path.join(HERE, 'pybs.log')
     qsub_args = ['qsub', pbsfile, 
@@ -35,6 +35,7 @@ def submit(command, nodes = 1, ppn = 16, walltime = 10, email = None, queue = No
         qsub_args.append(['-M', email, '-m', 'ae'])
     if queue is not None:
         qsub_args += ['-q', queue]          
+
     print(" ".join(qsub_args))
     subprocess.call(qsub_args)
 
